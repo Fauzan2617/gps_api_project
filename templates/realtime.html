@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live GPS</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+        h1 { text-align: center; }
+        #output {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.1em;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        p { margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h1>📍 Pelacak GPS Real-time</h1>
+    <div id="output">Loading...</div>
+
+    <script>
+    function formatUTC(timeStr) {
+        const date = new Date(timeStr);
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        const hh = String(date.getUTCHours()).padStart(2, '0');
+        const mi = String(date.getUTCMinutes()).padStart(2, '0');
+        const ss = String(date.getUTCSeconds()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
+    async function fetchGPS() {
+        try {
+            const res = await fetch('/gps');
+            const data = await res.json();
+
+            document.getElementById('output').innerHTML = `
+                🕒 <b>Waktu (UTC):</b> ${formatUTC(data.time)}<br>
+                🌍 <b>Lintang:</b> ${Math.abs(data.latitude).toFixed(6)} ${data.latitude < 0 ? 'LS' : 'LU'}<br>
+                🌐 <b>Bujur:</b> ${Math.abs(data.longitude).toFixed(6)} ${data.longitude < 0 ? 'BB' : 'BT'}<br>
+                ⛰️ <b>Ketinggian:</b> ${data.altitude.toFixed(2)} m<br>
+                🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
+                🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
+            `;
+        } catch (e) {
+            document.getElementById('output').innerText = 'Error getting GPS';
+        }
+    }
+
+    setInterval(fetchGPS, 1000);
+    window.onload = fetchGPS;
+</script>
+
+</body>
+</html>

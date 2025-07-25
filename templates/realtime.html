@@ -1,19 +1,23 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>Pelacak GPS Real-time</title>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live GPS Tracker</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         body {
             font-family: sans-serif;
-            background: #f5f5f5;
-            margin: 0;
             padding: 20px;
+            background: #f5f5f5;
         }
+
         h1 {
             text-align: center;
         }
+
         #output {
             background: white;
             border-radius: 12px;
@@ -23,68 +27,68 @@
             margin: 0 auto 20px auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        iframe {
-            display: block;
-            margin: 0 auto;
+
+        #map {
             width: 90%;
             max-width: 600px;
             height: 400px;
+            margin: 0 auto;
             border-radius: 12px;
-            border: none;
         }
     </style>
 </head>
 <body>
     <h1>📍 Pelacak GPS Real-time</h1>
     <div id="output">Loading...</div>
-    <iframe
-        id="mapFrame"
-        src="https://maps.google.com/maps?q=-6.200000,106.816666&z=15&output=embed"
-        allowfullscreen
-        loading="lazy"
-    ></iframe>
+    <div id="map"></div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        function formatUTC(timeStr) {
-            const date = new Date(timeStr);
-            const yyyy = date.getUTCFullYear();
-            const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-            const dd = String(date.getUTCDate()).padStart(2, '0');
-            const hh = String(date.getUTCHours()).padStart(2, '0');
-            const mi = String(date.getUTCMinutes()).padStart(2, '0');
-            const ss = String(date.getUTCSeconds()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    let map = L.map('map').setView([-6.2, 106.8], 15);
+    let marker = L.marker([-6.2, 106.8]).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    function formatUTC(timeStr) {
+        const date = new Date(timeStr);
+        const yyyy = date.getUTCFullYear();
+        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(date.getUTCDate()).padStart(2, '0');
+        const hh = String(date.getUTCHours()).padStart(2, '0');
+        const mi = String(date.getUTCMinutes()).padStart(2, '0');
+        const ss = String(date.getUTCSeconds()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
+    async function fetchGPS() {
+        try {
+            const res = await fetch('/gps');
+            const data = await res.json();
+
+            document.getElementById('output').innerHTML = `
+                🕒 <b>Waktu (UTC):</b> ${formatUTC(data.time)}<br>
+                🌍 <b>Lintang:</b> ${Math.abs(data.latitude).toFixed(6)} ${data.latitude < 0 ? 'LS' : 'LU'}<br>
+                🌐 <b>Bujur:</b> ${Math.abs(data.longitude).toFixed(6)} ${data.longitude < 0 ? 'BB' : 'BT'}<br>
+                ⛰️ <b>Ketinggian:</b> ${data.altitude.toFixed(2)} m<br>
+                🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
+                🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
+            `;
+
+            const lat = data.latitude;
+            const lon = data.longitude;
+            marker.setLatLng([lat, lon]);
+            map.setView([lat, lon], 15);
+
+        } catch (e) {
+            document.getElementById('output').innerText = 'Gagal mendapatkan data GPS.';
         }
+    }
 
-        async function fetchGPS() {
-            try {
-                const res = await fetch('/gps');
-                const data = await res.json();
-
-                document.getElementById('output').innerHTML = `
-                    🕒 <b>Waktu (UTC):</b> ${formatUTC(data.time)}<br>
-                    🌍 <b>Lintang:</b> ${Math.abs(data.latitude).toFixed(6)} ${data.latitude < 0 ? 'LS' : 'LU'}<br>
-                    🌐 <b>Bujur:</b> ${Math.abs(data.longitude).toFixed(6)} ${data.longitude < 0 ? 'BB' : 'BT'}<br>
-                    ⛰️ <b>Ketinggian:</b> ${data.altitude.toFixed(2)} m<br>
-                    🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
-                    🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
-                `;
-
-                const lat = data.latitude;
-                const lon = data.longitude;
-                const mapFrame = document.getElementById('mapFrame');
-                mapFrame.src = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-
-                // Untuk debug
-                console.log(`Updated to: ${lat}, ${lon}`);
-            } catch (e) {
-                document.getElementById('output').innerText = '❌ Gagal mengambil data GPS. Pastikan endpoint aktif.';
-                console.error('Fetch error:', e);
-            }
-        }
-
-        setInterval(fetchGPS, 1000);
-        window.onload = fetchGPS;
+    setInterval(fetchGPS, 1000);
+    window.onload = fetchGPS;
     </script>
 </body>
 </html>

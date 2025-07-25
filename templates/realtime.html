@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Live GPS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live GPS Tracker</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-        h1 { text-align: center; }
+        body {
+            font-family: sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
         #output {
             background: white;
             border-radius: 12px;
@@ -17,61 +26,65 @@
         iframe {
             display: block;
             margin: 0 auto;
-            border: none;
             width: 90%;
             max-width: 600px;
             height: 400px;
             border-radius: 12px;
+            border: none;
         }
-        p { margin: 8px 0; }
     </style>
 </head>
 <body>
     <h1>📍 Pelacak GPS Real-time</h1>
     <div id="output">Loading...</div>
-    <iframe id="mapFrame"
+    <iframe
+        id="mapFrame"
         src="https://maps.google.com/maps?q=-6.200000,106.816666&z=15&output=embed"
-        allowfullscreen></iframe>
+        allowfullscreen
+        loading="lazy"
+    ></iframe>
 
     <script>
-    function formatUTC(timeStr) {
-        const date = new Date(timeStr);
-        const yyyy = date.getUTCFullYear();
-        const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(date.getUTCDate()).padStart(2, '0');
-        const hh = String(date.getUTCHours()).padStart(2, '0');
-        const mi = String(date.getUTCMinutes()).padStart(2, '0');
-        const ss = String(date.getUTCSeconds()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
-    }
-
-    async function fetchGPS() {
-        try {
-            const res = await fetch('/gps');
-            const data = await res.json();
-
-            document.getElementById('output').innerHTML = `
-                🕒 <b>Waktu (UTC):</b> ${formatUTC(data.time)}<br>
-                🌍 <b>Lintang:</b> ${Math.abs(data.latitude).toFixed(6)} ${data.latitude < 0 ? 'LS' : 'LU'}<br>
-                🌐 <b>Bujur:</b> ${Math.abs(data.longitude).toFixed(6)} ${data.longitude < 0 ? 'BB' : 'BT'}<br>
-                ⛰️ <b>Ketinggian:</b> ${data.altitude.toFixed(2)} m<br>
-                🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
-                🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
-            `;
-
-            // Update Google Maps iframe dengan koordinat baru
-            const lat = data.latitude;
-            const lon = data.longitude;
-            const mapFrame = document.getElementById('mapFrame');
-            mapFrame.src = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-
-        } catch (e) {
-            document.getElementById('output').innerText = 'Error getting GPS';
+        function formatUTC(timeStr) {
+            const date = new Date(timeStr);
+            const yyyy = date.getUTCFullYear();
+            const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const dd = String(date.getUTCDate()).padStart(2, '0');
+            const hh = String(date.getUTCHours()).padStart(2, '0');
+            const mi = String(date.getUTCMinutes()).padStart(2, '0');
+            const ss = String(date.getUTCSeconds()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
         }
-    }
 
-    setInterval(fetchGPS, 1000);
-    window.onload = fetchGPS;
+        async function fetchGPS() {
+            try {
+                const res = await fetch('/gps');
+                const data = await res.json();
+
+                document.getElementById('output').innerHTML = `
+                    🕒 <b>Waktu (UTC):</b> ${formatUTC(data.time)}<br>
+                    🌍 <b>Lintang:</b> ${Math.abs(data.latitude).toFixed(6)} ${data.latitude < 0 ? 'LS' : 'LU'}<br>
+                    🌐 <b>Bujur:</b> ${Math.abs(data.longitude).toFixed(6)} ${data.longitude < 0 ? 'BB' : 'BT'}<br>
+                    ⛰️ <b>Ketinggian:</b> ${data.altitude.toFixed(2)} m<br>
+                    🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
+                    🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
+                `;
+
+                const lat = data.latitude;
+                const lon = data.longitude;
+                const mapFrame = document.getElementById('mapFrame');
+                mapFrame.src = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+
+                // Untuk debug
+                console.log(`Updated to: ${lat}, ${lon}`);
+            } catch (e) {
+                document.getElementById('output').innerText = '❌ Gagal mengambil data GPS. Pastikan endpoint aktif.';
+                console.error('Fetch error:', e);
+            }
+        }
+
+        setInterval(fetchGPS, 1000);
+        window.onload = fetchGPS;
     </script>
 </body>
 </html>

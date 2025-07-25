@@ -11,8 +11,17 @@
             padding: 20px;
             font-size: 1.1em;
             max-width: 500px;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        iframe {
+            display: block;
+            margin: 0 auto;
+            border: none;
+            width: 90%;
+            max-width: 600px;
+            height: 400px;
+            border-radius: 12px;
         }
         p { margin: 8px 0; }
     </style>
@@ -20,6 +29,9 @@
 <body>
     <h1>📍 Pelacak GPS Real-time</h1>
     <div id="output">Loading...</div>
+    <iframe id="mapFrame"
+        src="https://maps.google.com/maps?q=-6.200000,106.816666&z=15&output=embed"
+        allowfullscreen></iframe>
 
     <script>
     function formatUTC(timeStr) {
@@ -46,6 +58,13 @@
                 🚗 <b>Kecepatan:</b> ${data.speed.toFixed(2)} km/jam<br>
                 🧭 <b>Arah (Heading):</b> ${data.heading.toFixed(2)}°
             `;
+
+            // Update Google Maps iframe dengan koordinat baru
+            const lat = data.latitude;
+            const lon = data.longitude;
+            const mapFrame = document.getElementById('mapFrame');
+            mapFrame.src = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+
         } catch (e) {
             document.getElementById('output').innerText = 'Error getting GPS';
         }
@@ -53,7 +72,6 @@
 
     setInterval(fetchGPS, 1000);
     window.onload = fetchGPS;
-</script>
-
+    </script>
 </body>
 </html>

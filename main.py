@@ -1,31 +1,38 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
-from app.gps_reader import get_latest_gps
+import random
+import datetime
+import threading
+import time
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# Middleware agar bisa diakses dari HP atau web eksternal
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Boleh diatur jadi domain tertentu agar lebih aman
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+_current = {}
 
-# Endpoint JSON data GPS real-time
+def _update_random_gps():
+    global _current
+    while True:
+        now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        _current = {
+            "time":     now,
+            "latitude": round(random.uniform(-90,   90),   6),
+            "longitude":round(random.uniform(-180, 180),   6),
+            "altitude": round(random.uniform(0,     5000), 2),
+            "speed":    round(random.uniform(0,     120),  2),
+            "heading":  round(random.uniform(0,     360),  1),
+        }
+        time.sleep(1)
+
+@app.on_event("startup")
+def startup():
+    threading.Thread(target=_update_random_gps, daemon=True).start()
+
 @app.get("/gps")
-async def get_gps():
-    try:
-        data = get_latest_gps()
-        return JSONResponse(content=data)
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+def get_gps():
+    return _current
 
-# Endpoint HTML dengan peta Leaflet
-@app.get("/realtime", response_class=HTMLResponse)
-async def realtime_page(request: Request):
-    return templates.TemplateResponse("realtime.html", {"request": request})
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})

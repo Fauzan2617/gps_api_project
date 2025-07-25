@@ -1,10 +1,12 @@
 from fastapi import APIRouter
-from . import state
+from app.state import get_gps_state
 
 router = APIRouter()
 
+
 @router.get("/gps", tags=["GPS"])
 def get_latest_gps():
-    if not state.latest_gps_data:
+    gps = get_gps_state()
+    if not gps.get("time"):
         return {"message": "Belum ada data GPS"}
-    return state.latest_gps_data
+    return gps

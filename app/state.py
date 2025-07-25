@@ -1,9 +1,21 @@
-# Menyimpan state GPS secara global
-gps_state = {
-    "time": "2025-07-24T13:45:00Z",
-    "latitude": -6.200000,
-    "longitude": 106.816666,
-    "altitude": 15.3,
+from threading import Lock
+
+_gps_state = {
+    "time": "",
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "altitude": 0.0,
     "speed": 0.0,
     "heading": 0.0
 }
+_lock = Lock()
+
+
+def get_gps_state() -> dict:
+    with _lock:
+        return _gps_state.copy()
+
+
+def update_gps_state(new_data: dict):
+    with _lock:
+        _gps_state.update(new_data)

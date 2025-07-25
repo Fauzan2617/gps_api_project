@@ -1,18 +1,32 @@
-import serial
-import pynmea2
+import random
+import time
 import datetime
-from app.state import gps_state
 
-def get_latest_gps():
-    with serial.Serial('/dev/ttyUSB0', 9600, timeout=1) as ser:
-        line = ser.readline().decode('utf-8', errors='ignore')
-        if line.startswith('$GPRMC'):
-            msg = pynmea2.parse(line)
-            gps_state['latitude'] = msg.latitude
-            gps_state['longitude'] = msg.longitude
-            gps_state['speed'] = float(msg.spd_over_grnd) * 1.852  # knot to km/h
-            gps_state['heading'] = float(msg.true_course or 0.0)
-            gps_state['altitude'] = 0.0  # GPRMC tidak punya data ini
-            gps_state['time'] = datetime.datetime.utcnow().isoformat() + 'Z'
+def read_gps():
+    now = datetime.datetime.utcnow().isoformat() + "Z"
+    lat = random.uniform(-90.0, 90.0)
+    lon = random.uniform(-180.0, 180.0)
+    altitude = random.uniform(0.0, 10000.0)   # meters
+    speed = random.uniform(0.0, 200.0)        # km/h
+    heading = random.uniform(0.0, 360.0)      # degrees
+    return {
+        "time": now,
+        "latitude": lat,
+        "longitude": lon,
+        "altitude": altitude,
+        "speed": speed,
+        "heading": heading,
+    }
 
-    return gps_state
+def main():
+    print("Starting random GPS data generator (Ctrl+C to stop)...")
+    try:
+        while True:
+            data = read_gps()
+            print(data)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Stopped.")
+
+if __name__ == "__main__":
+    main()

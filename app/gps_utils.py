@@ -63,4 +63,6 @@ def parse_nmea(line: str) -> dict:
             "heading": heading,
         }
 
+
+
     return {}
